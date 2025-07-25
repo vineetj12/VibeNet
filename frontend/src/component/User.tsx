@@ -1,24 +1,38 @@
-// User.tsx
 import { useEffect, useRef, useState } from "react";
 
 function User() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [started, setStarted] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const roomidRef = useRef<string | null>(null);
 
+  const startVideo = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      setStarted(true);
+    } catch (e: any) {
+      console.error("Camera error:", e);
+      alert("Camera error: " + e.message);
+    }
+  };
+
   useEffect(() => {
-    const ws = new WebSocket(import.meta.env.VITE_WS_URL); 
+    if (!started) return;
+
+    const ws = new WebSocket(import.meta.env.VITE_WS_URL);
     setSocket(ws);
+
     ws.onmessage = async (msg) => {
       const data = JSON.parse(msg.data);
       const pc = pcRef.current;
 
       if (data.type === "ownership") {
         roomidRef.current = data.Roomid;
-        console.log(data.data + "1");
-        console.log("Room id is " + roomidRef.current);
         if (data.data === "sender") {
           await handelSender(ws);
         } else if (data.data === "reciever") {
@@ -57,17 +71,7 @@ function User() {
     return () => {
       ws.close();
     };
-  }, []);
-
-  useEffect(() => {
-    const vedio = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
-    };
-    vedio();
-  }, []);
+  }, [started]);
 
   async function handelSender(sock: WebSocket) {
     const pc = new RTCPeerConnection();
@@ -137,7 +141,11 @@ function User() {
         <p>Remote Video</p>
       </div>
 
-      <button onClick={nextuser}>Next</button>
+      {!started ? (
+        <button onClick={startVideo}>Start</button>
+      ) : (
+        <button onClick={nextuser}>Next</button>
+      )}
     </div>
   );
 }
