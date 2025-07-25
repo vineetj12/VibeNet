@@ -61,6 +61,20 @@ export class Roommanager {
   }
 
   removeuser(socket: WebSocket) {
-    this.pendinguser = this.pendinguser.filter(ws => ws !== socket);
+    const index = this.pendinguser.indexOf(socket);
+    if (index !== -1) {
+      this.pendinguser.splice(index, 1);
+      return;
+    }
+    for (const [roomId, room] of this.map.entries()) {
+      if (room.socket1 === socket || room.socket2 === socket) {
+        const otherSocket = room.socket1 === socket ? room.socket2 : room.socket1;
+        const data = { type: "deleteuser" };
+        room.call.message(otherSocket, data);
+        this.map.delete(roomId);
+        this.adduser(otherSocket, socket);
+        break;
+      }
+    }
   }
 }

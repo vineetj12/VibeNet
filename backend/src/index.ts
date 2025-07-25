@@ -18,6 +18,7 @@ wss.on('connection', (socket: WebSocket) => {
   });
 
   socket.on('close', () => {
+    console.log("someone dissconect")
     manager.removeuser(socket);
   });
 

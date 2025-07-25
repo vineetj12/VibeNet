@@ -27,6 +27,9 @@ export class call{
             this.reciever.send(JSON.stringify({type:'nextuser'}));
             this.sender.send(JSON.stringify({type:'nextuser'}));
          }
+         else if(data.type==='deleteuser'){
+            socket.send(JSON.stringify({type:'nextuser'}));
+         }
        }else{
         if(data.type==='createanswer'){
             this.sender.send(JSON.stringify({type:'createanswer',data:data.data}));
@@ -37,6 +40,9 @@ export class call{
         else if(data.type=='nextuser'){
             this.reciever.send(JSON.stringify({type:'nextuser'}));
             this.sender.send(JSON.stringify({type:'nextuser'}));
+        }
+        else if(data.type==='deleteuser'){
+            socket.send(JSON.stringify({type:'nextuser'}));
         }
        }
     }
