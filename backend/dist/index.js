@@ -1,0 +1,35 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const ws_1 = require("ws");
+const Roommanager_1 = require("./Roommanager");
+const wss = new ws_1.WebSocketServer({ port: 8080 });
+console.log("backend is up");
+let i = 1;
+const manager = new Roommanager_1.Roommanager();
+wss.on('connection', (socket) => {
+    console.log(`${i} user join`);
+    i++;
+    manager.adduser(socket, null);
+    socket.on('error', (error) => {
+        console.log("WebSocket error:", error);
+    });
+    socket.on('close', () => {
+        manager.removeuser(socket);
+    });
+    socket.on('message', (data) => {
+        try {
+            const message = JSON.parse(data.toString());
+            console.log(message.type);
+            if (message.type === 'nextuser') {
+                console.log("reach to index.js");
+                manager.nextuser(socket, message);
+            }
+            else {
+                manager.handelmessage(socket, message);
+            }
+        }
+        catch (err) {
+            console.error("Invalid JSON:", err);
+        }
+    });
+});
