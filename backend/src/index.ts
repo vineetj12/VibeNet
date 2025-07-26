@@ -19,6 +19,8 @@ wss.on('connection', (socket: WebSocket) => {
 
   socket.on('close', () => {
     console.log("someone dissconect")
+    i--;
+    console.log("now the total number of active users: "+(i-1));
     manager.removeuser(socket);
   });
 
