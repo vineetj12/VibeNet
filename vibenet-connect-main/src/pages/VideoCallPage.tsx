@@ -32,24 +32,19 @@ const VideoCallPage = () => {
     peerConnection,
   } = useWebRTC({
     onError: (error) => {
-      console.error("❌ WebRTC error:", error);
       toast.error("WebRTC error: " + error);
     },
   });
 
   const handleConnect = useCallback(() => {
-    console.log("Connected to backend");
     setIsLoading(true);
     toast.info("Waiting for someone to connect...");
   }, []);
 
   const handleMessage = useCallback(
     async (data: any) => {
-      console.log("Message from backend:", data);
-
       if (data.type === "ownership") {
         // Matched with someone!
-        console.log("Matched! Room:", data.Roomid, "Role:", data.data);
         setRoomId(data.Roomid);
         setRole(data.data);
         setIsLoading(false);
@@ -64,7 +59,6 @@ const VideoCallPage = () => {
         if (data.data === "sender") {
           const offer = await createOffer();
           if (offer) {
-            console.log("Sending createoffer");
             sendWebSocket({
               type: "createoffer",
               Roomid: data.Roomid,
@@ -74,13 +68,11 @@ const VideoCallPage = () => {
         }
       } else if (data.type === "createoffer") {
         // Received offer from sender
-        console.log("Received createoffer");
         await setRemoteDescription(data.data);
 
         // Create answer
         const answer = await createAnswer();
         if (answer) {
-          console.log("Sending createanswer");
           sendWebSocket({
             type: "createanswer",
             Roomid: roomId,
@@ -89,15 +81,12 @@ const VideoCallPage = () => {
         }
       } else if (data.type === "createanswer") {
         // Received answer from receiver
-        console.log("Received createanswer");
         await setRemoteDescription(data.data);
       } else if (data.type === "icecandidate") {
         // Received ICE candidate
-        console.log("Received ICE candidate");
         await addIceCandidate(data.data);
       } else if (data.type === "chat") {
         // Received chat message
-        console.log("Received chat message:", data.message);
         setMessages((prev) => [
           ...prev,
           {
@@ -109,20 +98,25 @@ const VideoCallPage = () => {
         ]);
       } else if (data.type === "nextuser") {
         // Next user request
-        console.log("Moving to next user");
         setIsLoading(true);
         setIsConnected(false);
         setRemoteUserName(undefined);
         setMessages([]);
         cleanupWebRTC();
         toast.info("Finding someone new...");
+      } else if (data.type === "deleteuser") {
+        // Other user ended the call - reset the connection but stay on page
+        setIsConnected(false);
+        setRemoteUserName(undefined);
+        setMessages([]);
+        cleanupWebRTC();
+        toast.info("User disconnected. Click Next to find someone new.");
       }
     },
     [addLocalStreamToPeer, createOffer, createAnswer, setRemoteDescription, addIceCandidate, cleanupWebRTC, roomId]
   );
 
   const handleDisconnect = useCallback(() => {
-    console.log("Disconnected from backend");
     setIsConnected(false);
     setIsLoading(false);
     setRoomId(null);
@@ -132,7 +126,6 @@ const VideoCallPage = () => {
 
   const handleError = useCallback(
     (error: Event) => {
-      console.error("WebSocket error:", error);
       setIsConnected(false);
       setIsLoading(false);
       setRoomId(null);
@@ -143,7 +136,7 @@ const VideoCallPage = () => {
   );
 
   // Connect to WebSocket backend
-  const { send: sendWebSocket, isConnected: wsConnected } = useWebSocket({
+  const { send: sendWebSocket, isConnected: wsConnected, disconnect: disconnectWebSocket } = useWebSocket({
     url: "ws://localhost:8081",
     onConnect: handleConnect,
     onMessage: handleMessage,
@@ -157,7 +150,6 @@ const VideoCallPage = () => {
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
-        console.log("Sending ICE candidate");
         sendWebSocket({
           type: "icecandidate",
           Roomid: roomId,
@@ -168,14 +160,25 @@ const VideoCallPage = () => {
   }, [peerConnection, roomId, sendWebSocket]);
 
   const handleEndCall = () => {
+    // Send end call message to the other user
+    if (roomId) {
+      sendWebSocket({
+        type: "deleteuser",
+        Roomid: roomId,
+      });
+    }
+    // Clean up WebRTC immediately
     cleanupWebRTC();
-    toast.info("Call ended");
-    navigate("/lobby", { state: { nickname } });
+    // Disconnect from WebSocket
+    disconnectWebSocket();
+    // Navigate back to lobby
+    setTimeout(() => {
+      navigate("/lobby", { state: { nickname } });
+    }, 100);
   };
 
   const handleNextUser = () => {
     if (roomId) {
-      console.log("Sending nextuser request");
       sendWebSocket({ type: "nextuser", Roomid: roomId });
     }
   };
@@ -192,7 +195,6 @@ const VideoCallPage = () => {
 
     // Send chat message through WebSocket
     if (roomId) {
-      console.log("Sending chat message:", text);
       sendWebSocket({
         type: "chat",
         Roomid: roomId,

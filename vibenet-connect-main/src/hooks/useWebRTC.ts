@@ -21,7 +21,6 @@ export const useWebRTC = ({ onStream, onError }: UseWebRTCProps) => {
       });
 
       peerConnection.ontrack = (event) => {
-        console.log("Remote track received:", event.track.kind);
         if (!remoteStreamRef.current) {
           remoteStreamRef.current = new MediaStream();
           setRemoteStream(remoteStreamRef.current);
@@ -30,21 +29,18 @@ export const useWebRTC = ({ onStream, onError }: UseWebRTCProps) => {
       };
 
       peerConnection.onconnectionstatechange = () => {
-        console.log("Connection state:", peerConnection.connectionState);
         if (peerConnection.connectionState === "failed") {
           onError?.("Connection failed");
         }
       };
 
       peerConnection.oniceconnectionstatechange = () => {
-        console.log("ICE connection state:", peerConnection.iceConnectionState);
       };
 
       peerConnectionRef.current = peerConnection;
       return peerConnection;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Failed to create peer connection";
-      console.error("Error creating peer connection:", errorMsg);
       onError?.(errorMsg);
       return null;
     }
@@ -60,7 +56,6 @@ export const useWebRTC = ({ onStream, onError }: UseWebRTCProps) => {
       return stream;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Failed to get local media";
-      console.error("Error getting local stream:", errorMsg);
       onError?.(errorMsg);
       return null;
     }
@@ -86,7 +81,6 @@ export const useWebRTC = ({ onStream, onError }: UseWebRTCProps) => {
         // Only add if not already added
         if (!existingTracks.includes(track.id)) {
           peerConnectionRef.current?.addTrack(track, localStreamRef.current!);
-          console.log("Added track to peer connection:", track.kind);
         }
       });
     }
@@ -118,11 +112,8 @@ export const useWebRTC = ({ onStream, onError }: UseWebRTCProps) => {
     }
 
     try {
-      console.log("📝 Creating answer, signalingState:", peerConnectionRef.current.signalingState);
-      
       // Check if we have a remote offer
       if (peerConnectionRef.current.signalingState !== "have-remote-offer") {
-        console.warn("⚠️ Cannot create answer in state:", peerConnectionRef.current.signalingState);
         onError?.("Invalid state for creating answer: " + peerConnectionRef.current.signalingState);
         return null;
       }
@@ -145,15 +136,12 @@ export const useWebRTC = ({ onStream, onError }: UseWebRTCProps) => {
       }
 
       try {
-        console.log("Setting remote description, type:", description.type, "signalingState:", peerConnectionRef.current.signalingState);
         await peerConnectionRef.current.setRemoteDescription(
           new RTCSessionDescription(description)
         );
-        console.log("Remote description set, signalingState now:", peerConnectionRef.current.signalingState);
         return true;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Failed to set remote description";
-        console.error("Error setting remote description:", errorMsg);
         onError?.(errorMsg);
         return false;
       }
@@ -169,7 +157,6 @@ export const useWebRTC = ({ onStream, onError }: UseWebRTCProps) => {
         await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
         return true;
       } catch (error) {
-        console.error("❌ Error adding ICE candidate:", error);
         return false;
       }
     },
@@ -177,16 +164,28 @@ export const useWebRTC = ({ onStream, onError }: UseWebRTCProps) => {
   );
 
   const cleanup = useCallback(() => {
+    // Close all peer connections and senders
     if (peerConnectionRef.current) {
+      peerConnectionRef.current.getSenders().forEach((sender) => {
+        peerConnectionRef.current?.removeTrack(sender);
+      });
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
+    // Disable and stop local tracks
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current.getTracks().forEach((track) => {
+        track.enabled = false;
+        track.stop();
+      });
       localStreamRef.current = null;
     }
+    // Disable and stop remote tracks
     if (remoteStreamRef.current) {
-      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
+      remoteStreamRef.current.getTracks().forEach((track) => {
+        track.enabled = false;
+        track.stop();
+      });
       remoteStreamRef.current = null;
       setRemoteStream(null);
     }

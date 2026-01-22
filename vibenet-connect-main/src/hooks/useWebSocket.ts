@@ -19,6 +19,7 @@ export const useWebSocket = ({
   const [isConnected, setIsConnected] = useState(false);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
   const reconnectAttemptsRef = useRef(0);
+  const shouldReconnectRef = useRef(true);
   
   // Store callbacks in refs to avoid dependency issues
   const onMessageRef = useRef(onMessage);
@@ -42,11 +43,9 @@ export const useWebSocket = ({
 
   const connect = useCallback(() => {
     try {
-      console.log(`Attempting to connect to ${url}`);
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
-        console.log("WebSocket connected successfully");
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
         onConnectRef.current?.();
@@ -54,30 +53,25 @@ export const useWebSocket = ({
 
       ws.onmessage = (event) => {
         try {
-          console.log("📨 Raw message from server:", event.data);
           const data = JSON.parse(event.data);
-          console.log("✅ Parsed message:", data);
           onMessageRef.current?.(data);
         } catch (e) {
-          console.error("❌ Failed to parse WebSocket message:", e, "Data:", event.data);
         }
       };
 
       ws.onerror = (error) => {
-        console.error("WebSocket error event:", error);
         setIsConnected(false);
         onErrorRef.current?.(error);
       };
 
       ws.onclose = () => {
-        console.log("WebSocket closed");
         setIsConnected(false);
         onDisconnectRef.current?.();
 
-        // Attempt to reconnect
-        if (reconnectAttemptsRef.current < 5) {
+        // Attempt to reconnect only if reconnection is enabled
+        if (shouldReconnectRef.current && reconnectAttemptsRef.current < 5) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
-          console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1})`);
+
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
             connect();
@@ -87,15 +81,29 @@ export const useWebSocket = ({
 
       wsRef.current = ws;
     } catch (err) {
-      console.error("Failed to create WebSocket:", err);
       setIsConnected(false);
     }
   }, [url]);
 
+  const disconnect = useCallback(() => {
+    shouldReconnectRef.current = false;
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    setIsConnected(false);
+  }, []);
+
   useEffect(() => {
+    shouldReconnectRef.current = true;
+    reconnectAttemptsRef.current = 0;
     connect();
 
     return () => {
+      shouldReconnectRef.current = false;
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
@@ -105,5 +113,5 @@ export const useWebSocket = ({
     };
   }, [connect]);
 
-  return { send, isConnected, ws: wsRef.current };
+  return { send, isConnected, ws: wsRef.current, disconnect };
 };

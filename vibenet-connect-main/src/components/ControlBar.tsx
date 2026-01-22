@@ -1,11 +1,9 @@
-import { Mic, MicOff, Video, VideoOff, SkipForward, PhoneOff, Settings, MessageCircle } from "lucide-react";
+import { Mic, MicOff, SkipForward, PhoneOff, Settings, MessageCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ControlBarProps {
   isMuted: boolean;
-  isCameraOff: boolean;
   onToggleMute: () => void;
-  onToggleCamera: () => void;
   onNextUser: () => void;
   onEndCall: () => void;
   onToggleChat?: () => void;
@@ -16,9 +14,7 @@ interface ControlBarProps {
 
 const ControlBar = ({
   isMuted,
-  isCameraOff,
   onToggleMute,
-  onToggleCamera,
   onNextUser,
   onEndCall,
   onToggleChat,
@@ -46,26 +42,6 @@ const ControlBar = ({
           </TooltipTrigger>
           <TooltipContent>
             <p>{isMuted ? "Unmute" : "Mute"}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {/* Camera Button */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={onToggleCamera}
-              className={`control-button ${isCameraOff ? 'bg-destructive/80 hover:bg-destructive' : ''}`}
-              aria-label={isCameraOff ? "Turn on camera" : "Turn off camera"}
-            >
-              {isCameraOff ? (
-                <VideoOff className="w-5 h-5 md:w-6 md:h-6" />
-              ) : (
-                <Video className="w-5 h-5 md:w-6 md:h-6" />
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{isCameraOff ? "Turn on camera" : "Turn off camera"}</p>
           </TooltipContent>
         </Tooltip>
 

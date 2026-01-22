@@ -25,7 +25,6 @@ interface VideoCallProps {
 
 const VideoCall = ({ isConnected, isLoading, remoteUserName, remoteStream, messages, onSendMessage, onEndCall, onNextUser }: VideoCallProps) => {
   const [isMuted, setIsMuted] = useState(false);
-  const [isCameraOff, setIsCameraOff] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -41,15 +40,13 @@ const VideoCall = ({ isConnected, isLoading, remoteUserName, remoteStream, messa
             userName={remoteUserName}
             remoteStream={remoteStream}
           />
-          <LocalPreview isCameraOff={isCameraOff} />
+          <LocalPreview />
         </div>
 
         {/* Controls */}
         <ControlBar
           isMuted={isMuted}
-          isCameraOff={isCameraOff}
           onToggleMute={() => setIsMuted(!isMuted)}
-          onToggleCamera={() => setIsCameraOff(!isCameraOff)}
           onNextUser={onNextUser}
           onEndCall={onEndCall}
           onToggleChat={() => setIsChatOpen(!isChatOpen)}
