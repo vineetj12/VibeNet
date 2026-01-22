@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 174 84% 35%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 222 47% 16%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 30% 20%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 263 84% 58%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 174 84% 35%;
+
+    --radius: 0.75rem;
+
+    /* Custom VibeNet tokens */
+    --glow-primary: 174 84% 45%;
+    --glow-accent: 263 84% 65%;
+    --glass: 222 47% 11% / 0.8;
+    --glass-border: 210 40% 98% / 0.1;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(174 84% 35%), hsl(174 84% 45%));
+    --gradient-accent: linear-gradient(135deg, hsl(263 84% 58%), hsl(263 84% 68%));
+    --gradient-hero: linear-gradient(180deg, hsl(222 47% 11%), hsl(222 47% 5%));
+    --gradient-glass: linear-gradient(135deg, hsl(222 47% 15% / 0.6), hsl(222 47% 10% / 0.4));
+    
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(174 84% 35% / 0.3);
+    --shadow-accent: 0 0 30px hsl(263 84% 58% / 0.25);
+    --shadow-card: 0 8px 32px hsl(222 47% 5% / 0.5);
+    --shadow-button: 0 4px 20px hsl(174 84% 35% / 0.4);
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-[hsl(var(--glass))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-2xl;
+  }
+
+  .glow-primary {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .glow-accent {
+    box-shadow: var(--shadow-accent);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(174 84% 45%), hsl(263 84% 65%));
+  }
+
+  .control-button {
+    @apply w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 ease-out;
+    @apply bg-secondary/80 hover:bg-secondary text-foreground backdrop-blur-sm;
+    @apply hover:scale-110 active:scale-95;
+  }
+
+  .control-button-primary {
+    @apply control-button bg-primary hover:bg-primary/90 glow-primary;
+  }
+
+  .control-button-destructive {
+    @apply control-button bg-destructive hover:bg-destructive/90;
+    box-shadow: 0 0 30px hsl(0 84% 60% / 0.3);
+  }
+
+  .control-button-accent {
+    @apply control-button bg-accent hover:bg-accent/90 glow-accent;
+  }
+
+  .video-container {
+    @apply relative overflow-hidden rounded-2xl bg-card;
+    box-shadow: var(--shadow-card);
+  }
+
+  .pip-container {
+    @apply absolute top-4 right-4 w-32 h-24 md:w-40 md:h-28 rounded-xl overflow-hidden border-2 border-primary/50 shadow-lg;
+    @apply transition-all duration-300 hover:scale-105 cursor-move;
+  }
+
+  .chat-bubble {
+    @apply px-4 py-2 rounded-2xl max-w-[80%] break-words;
+  }
+
+  .chat-bubble-incoming {
+    @apply chat-bubble bg-secondary text-foreground rounded-bl-md;
+  }
+
+  .chat-bubble-outgoing {
+    @apply chat-bubble bg-primary text-primary-foreground rounded-br-md ml-auto;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { 
+    box-shadow: 0 0 20px hsl(174 84% 35% / 0.3); 
+  }
+  50% { 
+    box-shadow: 0 0 40px hsl(174 84% 35% / 0.5); 
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
