@@ -36,8 +36,8 @@ export class call{
             this.sender.send(JSON.stringify({type:'nextuser'}));
          }
          else if(data.type==='deleteuser'){
-            console.log("User deleted");
-            socket.send(JSON.stringify({type:'nextuser'}));
+            console.log("User deleted from sender");
+            this.reciever.send(JSON.stringify({type:'deleteuser'}));
          }
        }else{
         if(data.type==='createanswer'){
@@ -58,8 +58,8 @@ export class call{
             this.sender.send(JSON.stringify({type:'nextuser'}));
         }
         else if(data.type==='deleteuser'){
-            console.log("User deleted");
-            socket.send(JSON.stringify({type:'nextuser'}));
+            console.log("User deleted from receiver");
+            this.sender.send(JSON.stringify({type:'deleteuser'}));
         }
        }
     }

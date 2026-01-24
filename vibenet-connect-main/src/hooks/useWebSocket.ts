@@ -6,6 +6,7 @@ interface UseWebSocketProps {
   onConnect?: () => void;
   onDisconnect?: () => void;
   onError?: (error: Event) => void;
+  shouldReconnect?: boolean;
 }
 
 export const useWebSocket = ({
@@ -14,6 +15,7 @@ export const useWebSocket = ({
   onConnect,
   onDisconnect,
   onError,
+  shouldReconnect = true,
 }: UseWebSocketProps) => {
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -42,6 +44,11 @@ export const useWebSocket = ({
   }, []);
 
   const connect = useCallback(() => {
+    // Don't reconnect if shouldReconnect is false
+    if (!shouldReconnect) {
+      return;
+    }
+
     try {
       const ws = new WebSocket(url);
 
@@ -68,8 +75,8 @@ export const useWebSocket = ({
         setIsConnected(false);
         onDisconnectRef.current?.();
 
-        // Attempt to reconnect only if reconnection is enabled
-        if (shouldReconnectRef.current && reconnectAttemptsRef.current < 5) {
+        // Attempt to reconnect only if enabled and reconnection flag is true
+        if (shouldReconnect && shouldReconnectRef.current && reconnectAttemptsRef.current < 5) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
 
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -83,7 +90,7 @@ export const useWebSocket = ({
     } catch (err) {
       setIsConnected(false);
     }
-  }, [url]);
+  }, [url, shouldReconnect]);
 
   const disconnect = useCallback(() => {
     shouldReconnectRef.current = false;
@@ -91,6 +98,7 @@ export const useWebSocket = ({
       clearTimeout(reconnectTimeoutRef.current);
     }
     if (wsRef.current) {
+      wsRef.current.onclose = null; // Remove onclose handler to prevent reconnection
       wsRef.current.close();
       wsRef.current = null;
     }

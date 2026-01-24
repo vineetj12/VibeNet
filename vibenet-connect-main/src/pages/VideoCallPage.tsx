@@ -142,6 +142,7 @@ const VideoCallPage = () => {
     onMessage: handleMessage,
     onDisconnect: handleDisconnect,
     onError: handleError,
+    shouldReconnect: false, // Don't auto-reconnect
   });
 
   // Setup ICE candidate listener
@@ -171,10 +172,10 @@ const VideoCallPage = () => {
     cleanupWebRTC();
     // Disconnect from WebSocket
     disconnectWebSocket();
-    // Navigate back to lobby
+    // Wait a bit longer before navigating to ensure disconnect completes
     setTimeout(() => {
       navigate("/lobby", { state: { nickname } });
-    }, 100);
+    }, 500);
   };
 
   const handleNextUser = () => {
@@ -202,6 +203,14 @@ const VideoCallPage = () => {
       });
     }
   }, [roomId, sendWebSocket]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      cleanupWebRTC();
+      disconnectWebSocket();
+    };
+  }, [cleanupWebRTC, disconnectWebSocket]);
 
   return (
     <VideoCall
