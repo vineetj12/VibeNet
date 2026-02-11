@@ -66,7 +66,7 @@ setInterval(() => {
   });
 }, 30000);
 
-server.listen(8081, "0.0.0.0", () => {
-  console.log(" WebSocket server listening on ws://localhost:8081");
-  console.log(" Accepting connections from all interfaces");
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`WebSocket server listening on ws://0.0.0.0:${PORT}`);
+  console.log("Accepting connections from all interfaces");
 });

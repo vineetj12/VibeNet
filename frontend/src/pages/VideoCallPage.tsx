@@ -136,8 +136,13 @@ const VideoCallPage = () => {
   );
 
   // Connect to WebSocket backend
+  const backendHost = "vibenet-m5rv.onrender.com"; // Render backend URL
+  const wsUrl = window.location.hostname.includes("localhost")
+    ? "ws://localhost:8081"
+    : `wss://${backendHost}`;
+
   const { send: sendWebSocket, isConnected: wsConnected, disconnect: disconnectWebSocket } = useWebSocket({
-    url: "ws://localhost:8081",
+    url: wsUrl,
     onConnect: handleConnect,
     onMessage: handleMessage,
     onDisconnect: handleDisconnect,
