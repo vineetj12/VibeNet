@@ -3,11 +3,20 @@ import type { WebSocket } from "ws";
 import { Roommanager } from "./Roommanager";
 import * as http from "http";
 
-// Create HTTP server to handle upgrades properly
-const server = http.createServer();
+// Create HTTP server to handle upgrades properly and provide a health endpoint
+const server = http.createServer((req, res) => {
+  if (req.url === "/health" || req.url === "/") {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("OK");
+    return;
+  }
+  res.writeHead(404);
+  res.end();
+});
+
 const wss = new WebSocketServer({ server });
 
-console.log("backend is up on port 8080");
+const PORT = Number(process.env.PORT) || 8081;
 
 let i = 1;
 const manager = new Roommanager();
