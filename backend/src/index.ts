@@ -13,7 +13,10 @@ const server = http.createServer((req, res) => {
   res.end();
 });
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ 
+  server,
+  perMessageDeflate: false 
+});
 
 const PORT = Number(process.env.PORT) || 8080;
 
@@ -69,11 +72,3 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`WebSocket server listening on ws://0.0.0.0:${PORT}`);
   console.log("Accepting connections from all interfaces");
 });
-
-(() => {
-  const ws = new WebSocket('wss://vibenet-m5rv.onrender.com');
-  ws.onopen = () => console.log('WS OPEN');
-  ws.onclose = (e) => console.log('WS CLOSE', e);
-  ws.onerror = (e) => console.error('WS ERR', e);
-  setTimeout(()=>ws.close(),5000);
-})();
