@@ -14,5 +14,5 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --production || npm install --production
 COPY --from=builder /app/dist ./dist
-EXPOSE 8081
+EXPOSE 8080
 CMD ["node", "dist/index.js"]
