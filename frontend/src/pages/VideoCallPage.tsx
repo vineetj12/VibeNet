@@ -21,6 +21,15 @@ const VideoCallPage = () => {
     timestamp: Date;
   }>>([]); // Start with empty messages
 
+  // Log component mount
+  useEffect(() => {
+    console.log("[VideoCallPage] Component mounted");
+    console.log("[VideoCallPage] Nickname:", nickname);
+    return () => {
+      console.log("[VideoCallPage] Component unmounting");
+    };
+  }, []);
+
   const {
     remoteStream,
     addLocalStreamToPeer,
@@ -32,19 +41,23 @@ const VideoCallPage = () => {
     peerConnection,
   } = useWebRTC({
     onError: (error) => {
+      console.error("[VideoCallPage] WebRTC error:", error);
       toast.error("WebRTC error: " + error);
     },
   });
 
   const handleConnect = useCallback(() => {
+    console.log("[VideoCallPage] WebSocket connected!");
     setIsLoading(true);
     toast.info("Waiting for someone to connect...");
   }, []);
 
   const handleMessage = useCallback(
     async (data: any) => {
+      console.log("[VideoCallPage] Message received:", data.type, data);
       if (data.type === "ownership") {
         // Matched with someone!
+        console.log("[VideoCallPage] Ownership received, roomId:", data.Roomid, "role:", data.data);
         setRoomId(data.Roomid);
         setRole(data.data);
         setIsLoading(false);
@@ -53,12 +66,15 @@ const VideoCallPage = () => {
         toast.success("Connected with someone!");
 
         // Setup WebRTC
+        console.log("[VideoCallPage] Setting up WebRTC...");
         await addLocalStreamToPeer();
 
         // If we're the sender (initiator), create offer
         if (data.data === "sender") {
+          console.log("[VideoCallPage] Creating offer...");
           const offer = await createOffer();
           if (offer) {
+            console.log("[VideoCallPage] Sending offer");
             sendWebSocket({
               type: "createoffer",
               Roomid: data.Roomid,
@@ -68,11 +84,14 @@ const VideoCallPage = () => {
         }
       } else if (data.type === "createoffer") {
         // Received offer from sender
+        console.log("[VideoCallPage] Received offer");
         await setRemoteDescription(data.data);
 
         // Create answer
+        console.log("[VideoCallPage] Creating answer...");
         const answer = await createAnswer();
         if (answer) {
+          console.log("[VideoCallPage] Sending answer");
           sendWebSocket({
             type: "createanswer",
             Roomid: roomId,
@@ -81,12 +100,15 @@ const VideoCallPage = () => {
         }
       } else if (data.type === "createanswer") {
         // Received answer from receiver
+        console.log("[VideoCallPage] Received answer");
         await setRemoteDescription(data.data);
       } else if (data.type === "icecandidate") {
         // Received ICE candidate
+        console.log("[VideoCallPage] Received ICE candidate");
         await addIceCandidate(data.data);
       } else if (data.type === "chat") {
         // Received chat message
+        console.log("[VideoCallPage] Received chat message");
         setMessages((prev) => [
           ...prev,
           {
@@ -98,6 +120,7 @@ const VideoCallPage = () => {
         ]);
       } else if (data.type === "nextuser") {
         // Next user request
+        console.log("[VideoCallPage] Next user request");
         setIsLoading(true);
         setIsConnected(false);
         setRemoteUserName(undefined);
@@ -106,17 +129,23 @@ const VideoCallPage = () => {
         toast.info("Finding someone new...");
       } else if (data.type === "deleteuser") {
         // Other user ended the call - reset the connection but stay on page
+        console.log("[VideoCallPage] Other user disconnected");
         setIsConnected(false);
         setRemoteUserName(undefined);
         setMessages([]);
         cleanupWebRTC();
         toast.info("User disconnected. Click Next to find someone new.");
+      } else if (data.type === "connected") {
+        console.log("[VideoCallPage] Server connection confirmed:", data.message);
+      } else {
+        console.log("[VideoCallPage] Unknown message type:", data.type);
       }
     },
     [addLocalStreamToPeer, createOffer, createAnswer, setRemoteDescription, addIceCandidate, cleanupWebRTC, roomId]
   );
 
   const handleDisconnect = useCallback(() => {
+    console.log("[VideoCallPage] WebSocket disconnected");
     setIsConnected(false);
     setIsLoading(false);
     setRoomId(null);
@@ -126,6 +155,7 @@ const VideoCallPage = () => {
 
   const handleError = useCallback(
     (error: Event) => {
+      console.error("[VideoCallPage] WebSocket error:", error);
       setIsConnected(false);
       setIsLoading(false);
       setRoomId(null);
@@ -139,14 +169,19 @@ const VideoCallPage = () => {
   const getBackendUrl = () => {
     // For development
     if (window.location.hostname.includes("localhost")) {
-      return "ws://localhost:8081";
+      console.log("[VideoCallPage] Using localhost backend: ws://localhost:8080");
+      return "ws://localhost:8080";
     }
     
     // For production - use environment variable or default
-    const backendHost = import.meta.env.VITE_BACKEND_URL || "localhost:8081";
-    return backendHost.startsWith("ws://") || backendHost.startsWith("wss://")
+    const backendHost = import.meta.env.VITE_BACKEND_URL || "vibenet-m5rv.onrender.com";
+    console.log("[VideoCallPage] Backend URL from env:", import.meta.env.VITE_BACKEND_URL);
+    console.log("[VideoCallPage] Using backend host:", backendHost);
+    const url = backendHost.startsWith("ws://") || backendHost.startsWith("wss://")
       ? backendHost
       : `wss://${backendHost}`;
+    console.log("[VideoCallPage] Final WebSocket URL:", url);
+    return url;
   };
   
   const wsUrl = getBackendUrl();
@@ -157,7 +192,7 @@ const VideoCallPage = () => {
     onMessage: handleMessage,
     onDisconnect: handleDisconnect,
     onError: handleError,
-    shouldReconnect: false, // Don't auto-reconnect
+    shouldReconnect: true, // Auto-reconnect enabled
   });
 
   // Setup ICE candidate listener
