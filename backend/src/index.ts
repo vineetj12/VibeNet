@@ -69,6 +69,8 @@ setInterval(() => {
 }, 30000);
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`WebSocket server listening on ws://0.0.0.0:${PORT}`);
-  console.log("Accepting connections from all interfaces");
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Backend WebSocket server listening on ws://0.0.0.0:${PORT}`);
+  console.log(`[${timestamp}] Accepting connections from all interfaces`);
+  console.log(`[${timestamp}] PORT env var: ${process.env.PORT || 'not set'}`);
 });
