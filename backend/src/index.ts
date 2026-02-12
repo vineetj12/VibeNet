@@ -1,5 +1,4 @@
-import { WebSocketServer } from "ws";
-import type { WebSocket } from "ws";
+import WebSocket, { WebSocketServer } from "ws";
 import { Roommanager } from "./Roommanager";
 import * as http from "http";
 
@@ -70,3 +69,11 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`WebSocket server listening on ws://0.0.0.0:${PORT}`);
   console.log("Accepting connections from all interfaces");
 });
+
+(() => {
+  const ws = new WebSocket('wss://vibenet-m5rv.onrender.com');
+  ws.onopen = () => console.log('WS OPEN');
+  ws.onclose = (e) => console.log('WS CLOSE', e);
+  ws.onerror = (e) => console.error('WS ERR', e);
+  setTimeout(()=>ws.close(),5000);
+})();
