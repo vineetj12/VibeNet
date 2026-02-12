@@ -18,7 +18,7 @@ const wss = new WebSocketServer({
   perMessageDeflate: false 
 });
 
-const PORT = 8080;
+const PORT = Number(process.env.PORT) || 8080;
 
 let i = 1;
 const manager = new Roommanager();
